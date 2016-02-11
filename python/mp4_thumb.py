@@ -2,9 +2,9 @@ import os
 import glob
 import cv2
 
-a = glob.glob(r'../media/video/*.mp4')
+a = glob.glob('../static/media/video/*.mp4')
 for x in a:
-    name = os.path.join("../media/video/thumb", x[15:-4]);
+    name = os.path.join("../static/media/video/thumb", x[22:-4]);
     name += ".jpg"
     print(name)
 
