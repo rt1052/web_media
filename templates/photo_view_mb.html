@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>media</title>
+<style>
+
+.wrap {
+    width: 960px;
+    height: 1750px;
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+    background-color: black;
+}
+
+.body {
+    position: static;
+}
+
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+    <img id="main" src="" width="940" >
+</div>
+
+<script src="/static/js/jquery-2.1.4.min.js"></script>
+
+<script>
+
+(function(){
+
+    var Play = function(options) {
+        this.page = 0;
+        this.ptr = 0;
+        this.startx = 0;
+        this.starty = 0;
+        this.list = null;
+        this.num = 99;
+        this.init();
+    };
+
+    Play.prototype.init = function() {
+        this.get_url_param();
+        this.get_img_list();
+        this.image_load();
+        this.touch();
+    }
+
+    Play.prototype.image_load = function() {
+        var self = this;
+
+        var img_obj = document.getElementById("main");
+        img_obj.width = "120";
+        img_obj.src = "/static/img/loading.gif";
+
+        var img = new Image();
+        img.src = "/static/media/photo/" + self.list[self.ptr].name;
+        img.onload = function() {
+            img_obj.width = "940";
+            img_obj.src = "/static/media/photo/" + self.list[self.ptr].name;
+        }  
+    }
+
+    Play.prototype.touch = function() {
+        var self = this;
+        //手指接触屏幕
+        document.addEventListener("touchstart", function(e) {
+           self.startx = e.touches[0].pageX;
+        }, false);
+        //手指离开屏幕
+        document.addEventListener("touchend", function(e) {
+            var endx = e.changedTouches[0].pageX;
+            var distance = endx - self.startx;
+
+            if (distance > 5) {
+                if (self.ptr > 0) {
+                    self.ptr--;
+                    self.image_load();
+                }
+            } else if (distance < -5) {
+                if (self.ptr < self.num) {
+                    self.ptr++;
+                    self.image_load();
+                }
+            }
+        }, false);        
+    }
+
+    Play.prototype.get_img_list = function() {
+        var self = this;
+        $.ajax({
+            url: "/list?dir=photo&dev=mb&page=" + self.page.toString(),
+            type: "GET",
+            dataType: "json",
+            async: false,        
+            success: function (json_data) {
+                self.list = json_data.data;
+                //self.num = json_data.num;
+            }
+        });
+    }
+
+    Play.prototype.get_url_param = function() {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0; i<vars.length; i++) {
+            var pair = vars[i].split("=");
+
+            switch (pair[0]) {
+                case "page":
+                    this.page = pair[1];
+                    break;
+                case "ptr":
+                    this.ptr = pair[1];
+                    break;
+            }
+        }
+    }
+    
+    window.Play = Play;
+})();
+
+new Play();
+
+</script>
+
+
+</body>
+</html>

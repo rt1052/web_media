@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>media</title>
+<style>
+    .parent { 
+        width:95%;
+        -moz-column-count: 2;
+        -webkit-column-count: 2;
+        column-count: 2;
+     }
+
+     .child {
+        margin-bottom: 40px;
+        margin-left: 10px;
+        margin-right: 10px:    
+        -moz-page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        break-inside: avoid;
+        color: #fff;
+        width:: 440px;
+        background: #fff;
+     }
+
+    .img-m {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 20px;
+        width: 440px;
+        height: auto;    
+    }
+
+</style>
+<body>
+
+<script src="/static/js/jquery-2.1.4.min.js"></script>
+
+<script>
+(function(){
+
+    var PhotoGraph = function(options) {
+        this.page = 0;
+        this.page_num = 0;
+        this.init();
+    };
+
+    PhotoGraph.prototype.init = function() {
+        this.page = this.get_url_page();
+        this.layout();
+    }
+
+    PhotoGraph.prototype.get_url_page = function() {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] == "page") {
+                return pair[1];
+            }
+        }
+        return(false);
+    }
+
+    PhotoGraph.prototype.create_button = function(p_obj, href, value, color) {
+        var a_obj = document.createElement("a");
+        a_obj.href = href;
+        var page_obj = document.createElement("input");
+        page_obj.type = "button";
+        page_obj.value = value;
+        page_obj.style = "width:110px;height:110px;font-size:50px;background:" + color + ";border:none;"; 
+        a_obj.appendChild(page_obj);
+        p_obj.appendChild(a_obj);        
+    }
+
+    PhotoGraph.prototype.create_page_button = function(num) {
+       
+        // 空白行
+        var br_obj = document.createElement("br");
+        document.body.appendChild(br_obj);
+        var p_obj = document.createElement("p");
+
+        this.create_button(p_obj, "/", "<", "white");
+
+        // 页面选择按钮
+        for (var i = 1; i <= num; i++) {
+            var href = "photo_mb?dev=mb&page=" + i.toString();
+            if (i == this.page) {
+                this.create_button(p_obj, href, i.toString(), "lightblue");
+            } else if (Math.abs(i-this.page) < 3) {
+                this.create_button(p_obj, href, i.toString(), "white");
+            } else if (i == 1) {
+                this.create_button(p_obj, href, "1 ...", "white");
+            } else if (i == num) {
+                this.create_button(p_obj, href, "... " + num.toString(), "white");
+            }
+        }
+        document.body.appendChild(p_obj);
+        // 空白行
+        br_obj = document.createElement("br");
+        document.body.appendChild(br_obj);        
+    }
+
+    PhotoGraph.prototype.layout = function() {
+        var self = this;
+        $.ajax({
+            url: "/list?dir=photo&dev=mb&page=" + self.page.toString(),
+            type: "GET",
+            dataType: "json",
+            async: false,        
+            success: function (json_data) {
+                data = json_data.data;
+                num = json_data.num;
+                console.log(num);                
+
+                var par_obj = document.createElement("div");
+                par_obj.className = "parent";
+
+                for (var i in data) {
+                    var img_name = data[i].name;
+                    var img_height = data[i].height;
+
+                    var chi_obj = document.createElement("div");
+                    chi_obj.className = "child";
+                    chi_obj.style = "height:" + img_height.toString() + "px;";
+                    a_obj = document.createElement("a");
+                    a_obj.href = "photo_view_mb?page=" + self.page.toString() + "&ptr=" + i.toString();
+
+                    var img_obj = document.createElement("img");
+                    img_obj.className = "img-m"
+                    img_obj.src = "/static/media/photo/thumb/" + img_name;
+                    img_obj.alt = img_name;
+
+                    a_obj.appendChild(img_obj);
+                    chi_obj.appendChild(a_obj);
+                    par_obj.appendChild(chi_obj);
+                }
+                document.body.appendChild(par_obj);
+                self.create_page_button(num);
+            }
+        });
+    };
+    window.PhotoGraph = PhotoGraph;
+})();
+
+new PhotoGraph();
+
+</script>
+
+</body>
+</html>

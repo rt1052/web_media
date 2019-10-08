@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>media</title>
+<style>
+
+.flex-container {
+    display: -webkit-flex;
+    display: flex;
+    width: 100%;
+    height: auto;
+    background-color: white;
+}
+
+.flex-item {
+    background-color: cornflowerblue;
+    width: auto;
+    height: auto;
+    margin: 10px;
+}
+
+.img-m {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+
+#imgModule{
+  display:none;
+}
+
+.mask{
+  background:black;
+  position:fixed;
+  left:0;
+  top:0;
+  width:100%;
+  height:100%;
+}
+
+.lightBoxContent{
+  width:90%;
+  height:90%;
+  position:fixed;
+  left:5%;
+  top:5%;
+  background:black;
+  text-align:center
+}
+
+#imgLoader{
+  width:60px;
+  height:60px;
+  position:fixed;
+  left:50%;
+  top:50%;
+  margin:-16px 0 0 -16px;
+  display:none;
+}
+
+#imgLight{
+  width:auto;
+  height:100%;
+  -webkit-animation:change 1s;
+  animation:change 1s;
+  transform:rotate(0deg);  
+}
+
+.btn{
+  width:40px;
+  height:50px;
+  position:fixed;
+  top:50%;
+  margin-top:-25px;
+  cursor:pointer;
+}
+
+.lightBoxSprite{
+  background-image:url(../image/ctrl_icon.png);
+  background-repeat:no-repeat;
+}
+
+#lightBoxPrev{
+  left:150px;
+  background-position:2px center;
+}
+
+#lightBoxNext{
+  right:150px;
+  background-position:-42px center;
+}
+
+#lightBoxClose{
+  right:150px;
+  top:10%;
+  background-position:-100px center;
+}
+
+</style>
+</head>
+<body>
+
+
+
+<script src="../js/jquery-2.1.4.min.js"></script>
+<script>
+(function(){
+
+    var PhotoGraph = function(options) {
+        this.page = 0;
+        this.page_num = 0;
+        this.init();
+    };
+
+    PhotoGraph.prototype.init = function() {
+    	this.page = this.get_url_page();
+    	this.layout();
+    }
+
+	PhotoGraph.prototype.get_url_page = function() {
+	    var query = window.location.search.substring(1);
+	    var vars = query.split("&");
+	    for (var i=0;i<vars.length;i++) {
+	        var pair = vars[i].split("=");
+	        if(pair[0] == "page") {
+	        	return pair[1];
+	        }
+	    }
+	    return(false);
+	}
+
+	PhotoGraph.prototype.create_row = function(arr, zoom) {
+	    // 写html
+	    var row_obj = document.createElement("div");
+		row_obj.className  = "flex-container";
+		for (var i in arr) {
+			var div_obj = document.createElement("div");
+			var img_obj = document.createElement("img");
+			img_obj.className  = "img-m";
+			img_obj.src = "../media/photo/thumb/" + arr[i];
+			img_obj.alt = arr[i];
+			img_obj.height = zoom.toString();
+
+			div_obj.appendChild(img_obj);
+			row_obj.appendChild(div_obj);
+		}
+		document.body.appendChild(row_obj);
+	}
+
+
+	PhotoGraph.prototype.create_page_button = function(num) {
+	   
+		  // 空白行
+		  var br_obj = document.createElement("br");
+		  document.body.appendChild(br_obj);
+
+      var p_obj = document.createElement("p");
+      // 返回按钮
+      var a_obj = document.createElement("a");
+      a_obj.href = "../index.html";
+
+      var page_obj = document.createElement("input");
+      page_obj.type = "button";
+      page_obj.value = "<";
+      page_obj.style = "width:50px;height:50px;font-size:20px;background:white;border:none;"; 
+
+      a_obj.appendChild(page_obj);
+      p_obj.appendChild(a_obj);
+
+		// 页面选择按钮
+		for (var i = 1; i <= num; i++) {
+
+      var a_obj = document.createElement("a");
+      a_obj.href = "photo_pc.html?page=" + i.toString();
+
+      var page_obj = document.createElement("input");
+      page_obj.type = "button";
+      page_obj.value = i.toString();
+      if (i == this.page) {
+        page_obj.style = "width:50px;height:50px;font-size:20px;background:lightblue;border:none;"; 
+      } else {
+        page_obj.style = "width:50px;height:50px;font-size:20px;background:white;border:none;"; 
+      }
+
+      a_obj.appendChild(page_obj);
+      p_obj.appendChild(a_obj);
+		}
+		document.body.appendChild(p_obj);
+		// 空白行
+		br_obj = document.createElement("br");
+		document.body.appendChild(br_obj);        
+	}
+
+
+	PhotoGraph.prototype.layout = function() {
+		var self = this;
+		var json_file = "../json/photo_thumb_pc" + self.page.toString() +".json";
+	    $.ajax({
+	        url: json_file,
+	        type: "GET",
+	        dataType: "json",
+	        async: false,        
+	        success: function (json_data) {
+	        	data = json_data.data;
+            num = json_data.num;
+            // console.log(num);
+
+	        	var sum_width = 0;
+	        	var screen_width = 1880;
+				    var img_arr = new Array();
+
+	        	for (var i in data) {
+	        		var img_name = data[i].name;
+	        		var img_width = data[i].width;
+	        		if ((screen_width-sum_width) < img_width/2) {
+	        			var img_num = img_arr.length;
+	        			var zoom = (screen_width-10*img_num)*200/sum_width;
+	        			// 转化为整数
+	        			zoom = Math.floor(zoom);
+	        			// console.log(zoom);
+	        			self.create_row(img_arr, zoom);
+
+		                sum_width = img_width;
+		                delete img_arr;
+		               	img_arr = new Array();	
+		               	img_arr.push(img_name);
+
+	        		} else {
+	        			sum_width += img_width;
+	        			img_arr.push(img_name);
+	        			// console.log(img_name);
+	        		}
+	        	}
+	        	// 最后一行
+	        	self.create_row(img_arr, 200);
+	        	self.create_page_button(num);
+	        }
+	    });
+    };
+    window.PhotoGraph = PhotoGraph;
+})();
+
+new PhotoGraph();
+
+</script>
+
+
+<script>
+(function(){
+    var LightBox = function(options){
+        this.idx = 0;
+        this.angle = 0;
+        this.imgList = null;
+        this.init();
+    };
+
+    LightBox.prototype.init = function(){
+        this.renderDOM();
+        this.imgListClick();
+        this.nextBtnClick();
+        this.prevBtnClick();
+        this.closeBtnClick();
+        this.imgClick();
+    };
+
+    LightBox.prototype.renderDOM = function(){
+        var imgModule = document.createElement("div");
+        imgModule.id = "imgModule";
+
+        var oHtml = "";
+        oHtml += '<div class="mask"></div>';
+        oHtml +=    '<div class="lightBox">';
+        oHtml +=        '<div class="lightBoxContent">';
+        oHtml +=            '<img src="../image/loading.gif" alt="" id="imgLoader">';
+        oHtml +=            '<img alt="" id="imgLight">';
+        oHtml +=        '</div>';
+        oHtml +=        '<span class="btn lightBoxSprite" id="lightBoxPrev"></span>';
+        oHtml +=        '<span class="btn lightBoxSprite" id="lightBoxNext"></span>';
+        oHtml +=        '<span class="btn lightBoxSprite" id="lightBoxClose"></span>';         
+        oHtml +=    '</div>';
+
+        imgModule.innerHTML = oHtml;
+        document.body.appendChild(imgModule);
+    };
+
+    LightBox.prototype.imgListClick = function(){
+        this.imgList = document.getElementsByClassName("img-m");
+        var imgModule = document.getElementById("imgModule");
+        var self = this;
+
+        for(var i = 0; i < this.imgList.length; i++){
+            this.imgList[i].index = i;
+
+            this.imgList[i].onclick = function(){
+                imgModule.style.display = "block";
+                // 获取缩略图路径
+                var tmp = this.getAttribute("src");
+                // 生成原图路径
+                var src = tmp.slice(0, 15) + tmp.slice(21);
+                console.log(src);
+
+                self.idx = this.index;
+
+                self.imgLoad(src);
+            }
+        }
+    };
+
+    LightBox.prototype.prevBtnClick = function(){
+        var prevBtn = document.getElementById("lightBoxPrev");
+        var self = this;
+
+        prevBtn.onclick = function(){
+            //var imgList = document.getElementsByClassName("img-m");
+            
+            self.idx--;
+
+            if(self.idx < 0){  
+                self.idx = self.imgList.length - 1;  
+            }
+
+            //var src = imgList[self.idx].getAttribute("data-src");
+            var tmp = self.imgList[self.idx].getAttribute("src");
+            var src = tmp.slice(0, 15) + tmp.slice(21);
+                
+            self.imgLoad(src);
+        }
+    };
+
+    LightBox.prototype.nextBtnClick = function(){
+        var nextBtn = document.getElementById("lightBoxNext");
+        var self = this;
+        
+        nextBtn.onclick = function(){
+            //var self.imgList = document.getElementsByClassName("img-m");
+
+            self.idx++;            
+
+            if(self.idx >= self.imgList.length){  
+                self.idx = 0;  
+            }
+
+            //var src = imgList[self.idx].getAttribute("data-src");
+            var tmp = self.imgList[self.idx].getAttribute("src");
+            var src = tmp.slice(0, 15) + tmp.slice(21);
+
+            self.imgLoad(src);
+        }
+    };
+
+    LightBox.prototype.closeBtnClick = function(){
+        var closeBtn = document.getElementById("lightBoxClose");
+        var imgLight = document.getElementById("imgLight");
+        var imgModule = document.getElementById("imgModule");        
+        
+        closeBtn.onclick = function(){
+            imgModule.style.display = "none";
+            imgLight.src = "";
+        }    
+    };    
+
+    LightBox.prototype.imgClick = function(){
+        var imgLight = document.getElementById("imgLight");
+        var imgModule = document.getElementById("imgModule");
+        
+        imgLight.onclick = function(){
+            self.angle = (self.angle+90)%360;
+            this.style.transform = "rotate("+self.angle+"deg)";
+        }     
+    };    
+
+    LightBox.prototype.imgLoad = function(src, callback){
+        var imgLight = document.getElementById("imgLight");
+        var loader = document.getElementById("imgLoader");
+        loader.style.display = "block";
+        imgLight.src = "";
+
+        var img = new Image();
+        img.onload = function(){
+            loader.style.display = "none";
+            self.angle = 0;
+            imgLight.style.transform = "rotate("+self.angle+"deg)";            
+            imgLight.src = src;
+        };
+        img.src = src;
+    };
+
+    window.LightBox = LightBox;
+})();
+
+new LightBox();
+
+</script>
+
+
+</body>
+</html>

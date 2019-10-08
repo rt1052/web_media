@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="format-detection"content="telephone=no">
+<title>首页</title>
+</head>
+<body>
+    
+    <br>
+      <a id="photo" href="http://192.168.0.42/html/photo_page1.html"><input type="button" value="相册" style="width:345px;height:150px;font-size:20px;background:lightgrey;border:none;" /></a>
+    </br>
+
+    <br>
+      <a id="video" href="http://192.168.0.42/html/video.html"><input type="button" value="视频" style="width:345px;height:150px;font-size:20px;background:lightyellow;border:none;" /></a>
+    </br>
+
+    <br>
+      <a id="test" href="http://192.168.0.42/html/test.html"><input type="button" value="测试" style="width:345px;height:150px;font-size:20px;background:lightblue;border:none;" /></a>    
+    </br>
+
+    <br>
+      <a id="test" href="refresh?dir=photo"><input type="button" value="更新照片" style="width:345px;height:150px;font-size:20px;background:red;border:none;" /></a>    
+    </br>
+
+    <br>
+      <a id="test" href="refresh?dir=video"><input type="button" value="更新视频" style="width:345px;height:150px;font-size:20px;background:orange;border:none;" /></a>    
+    </br>
+
+    <script type="text/javascript"> 
+        var u = navigator.userAgent; 
+        var ph = document.getElementById("photo");
+        var vi = document.getElementById("video");
+        var ts = document.getElementById("test");
+
+        var isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1; // android终端 
+        if (isAndroid) {
+            ph.href = "photo_mb?dev=mb&page=1";
+            vi.href = "video_mb?dev=mb&page=1";
+        } else {
+            ph.href = "photo_pc?dev=pc&page=1";
+            vi.href = "video_pc?dev=pc&page=1";
+        }
+    </script>
+
+</body>
+</html>

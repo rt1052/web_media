@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>media</title>
+<style>
+    .parent { 
+        width:95%;
+        -moz-column-count: 2;
+        -webkit-column-count: 2;
+        column-count: 2;
+     }
+
+     .child {
+        margin-bottom: 40px;
+        margin-left: 10px;
+        margin-right: 10px:    
+        -moz-page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        break-inside: avoid;
+        color: #fff;
+        width:: 440px;
+        background: #fff;
+     }
+
+    .img-m {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 5px;
+        padding: 20px;
+        width: 440px;
+        height: auto;    
+    }
+
+</style>
+
+<body>
+
+<script src="../js/jquery-2.1.4.min.js"></script>
+<script>
+(function(){
+
+    var PhotoGraph = function(options) {
+        this.page = 0;
+        this.page_num = 0;
+        this.init();
+    };
+
+    PhotoGraph.prototype.init = function() {
+        this.page = this.get_url_page();
+        this.layout();
+    }
+
+    PhotoGraph.prototype.get_url_page = function() {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i=0;i<vars.length;i++) {
+            var pair = vars[i].split("=");
+            if(pair[0] == "page") {
+                return pair[1];
+            }
+        }
+        return(false);
+    }
+
+    PhotoGraph.prototype.create_page_button = function(num) {
+       
+        // 空白行
+        var br_obj = document.createElement("br");
+        document.body.appendChild(br_obj);
+
+        var p_obj = document.createElement("p");
+        // 返回按钮
+        var page_obj = document.createElement("input");
+        page_obj.type = "button";
+        page_obj.value = "<";
+        page_obj.style = "width:100px;height:100px;font-size:40px;background:white;border:none;"; 
+        p_obj.appendChild(page_obj);
+
+        // 页面选择按钮
+        for (var i = 1; i <= num; i++) {
+            page_obj = document.createElement("input");
+            page_obj.type = "button";
+            page_obj.value = i.toString();
+            if (i == this.page) {
+                page_obj.style = "width:100px;height:100px;font-size:40px;background:lightblue;border:none;";
+            } else {
+                page_obj.style = "width:100px;height:100px;font-size:40px;background:white;border:none;";
+                page_obj.onclick = function(){
+                    window.history.pushState(null, null, "?page="+this.value);
+                    // 刷新页面
+                    window.location.reload();
+          // 回到页面顶端
+          $(window).scrollTop(0);
+                }               
+            }
+
+            p_obj.appendChild(page_obj);
+        }
+        document.body.appendChild(p_obj);
+        // 空白行
+        br_obj = document.createElement("br");
+        document.body.appendChild(br_obj);        
+    }
+
+    PhotoGraph.prototype.layout = function() {
+        var self = this;
+        var json_file = "../json/video_thumb_mb" + self.page.toString() +".json";
+        $.ajax({
+            url: json_file,
+            type: "GET",
+            dataType: "json",
+            async: false,        
+            success: function (json_data) {
+                data = json_data.data;
+                num = json_data.num;
+                console.log(num);                
+
+                var par_obj = document.createElement("div");
+                par_obj.className = "parent";
+
+                for (var i in data) {
+                    var img_name = data[i].name;
+                    var img_height = data[i].height;
+
+                    var chi_obj = document.createElement("div");
+                    chi_obj.className = "child";
+                    chi_obj.style = "height:" + img_height.toString() + "px;";
+                    var a_obj = document.createElement("a");
+                    a_obj.target = "_blank";
+                    a_obj.href = "video_play_mb.html?file=" + img_name.slice(0, -4);
+
+                    var img_obj = document.createElement("img");
+                    img_obj.className = "img-m"
+                    img_obj.src = "../media/video/thumb/" + img_name;
+                    img_obj.alt = img_name;
+
+                    a_obj.appendChild(img_obj);
+                    chi_obj.appendChild(a_obj);
+                    par_obj.appendChild(chi_obj);
+                }
+                document.body.appendChild(par_obj);
+                self.create_page_button(num);
+            }
+        });
+    };
+    window.PhotoGraph = PhotoGraph;
+})();
+
+new PhotoGraph();
+
+</script>
+
+
+</body>
+</html>
